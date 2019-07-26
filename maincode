@@ -5,7 +5,7 @@ timedate = time.strftime("%Y-%m-%d")
 time = time.strftime("%H:%M:%S")
 
 #Set the variable for the pathway for the newly created text file
-txt_file = r"H:\Exhibits\Python\Updates\TransientContactUpdates" + timedate + ".txt"
+txt_file = r"C:\Users\thariri\Desktop\TCUpdates" + timedate + ".txt"
 #Using f as variable, use open to open and write to the text file
 f = open(txt_file, 'w')
 
@@ -13,10 +13,10 @@ f = open(txt_file, 'w')
 f.write("This script was run on " + timedate + " at " + time + ".")
 
 # Define the gis data variables
-fc = r"H:\Datasets\PD_Data.gdb\CautionAlert\TransientContactWGS"
+fc = r"S:\gis\SharedGISDocs\ArcMap\PythonTemp.gdb\TCContactTemp"
 
 # CSV file variables
-csv_file = r"H:\Exhibits\Tables\TransientContactPython.csv"
+csv_file = r"S:\gis\SharedGISDocs\ArcMap\TransientContactPythonTemp.csv"
 
 # Initialize the list of CAD event numbers
 cad_list = []
@@ -79,6 +79,33 @@ with arcpy.da.InsertCursor(fc, ["SHAPE@XY", "CADEvent_", "Beat", "Type", "Code",
 
 print >>f, str(count) + " features were added"
 
+#statistical analysis
+ctrb1=0
+ctrb2=0
+ctrb3=0
+ctrb4=0
+
+for xtwo in cad_list:\
+    beat = [3]
+    if (xtwo.beat == "46-1"):
+        ctrb1+=1
+    elif (xtwo.beat == "46-2"): 
+        ctrb2+=1
+    elif (xtwo.beat == "46-3"):
+        ctrb3+=1
+    else:
+        ctrb4+=1
+
+
+total= ctrb1+ctrb2+ctrb3+ctrb4 
+    
 
  
+print("Percentage of contacts in beat 1: {}".format(ctrb1/total))
+print("Percentage of contacts in beat 2: {}".format(ctrb2/total))
+print("Percentage of contacts in beat 3: {}".format(ctrb3/total))
+print("Percentage of contacts in beat 4: {}".format(ctrb4/total))
+ 
 f.close()
+
+
