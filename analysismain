@@ -1,0 +1,112 @@
+import arcpy, csv, time
+
+#Set the variables for adding the date and time to the output text file when the script is run
+timedate = time.strftime("%Y-%m-%d")
+time = time.strftime("%H:%M:%S")
+
+#Set the variable for the pathway for the newly created text file
+txt_file = r"C:\Users\thariri\Desktop\TCUpdates" + timedate + ".txt"
+#Using f as variable, use open to open and write to the text file
+f = open(txt_file, 'w')
+
+#Write the first printed statement in the text file - date and time last run
+f.write("This script was run on " + timedate + " at " + time + ".")
+
+# Define the gis data variables
+fc = r"S:\gis\SharedGISDocs\ArcMap\PythonTemp.gdb\TCContactTemp"
+
+# CSV file variables
+csv_file = r"S:\gis\SharedGISDocs\ArcMap\TransientContactPythonTemp.csv"
+
+# Initialize the list of CAD event numbers
+cad_list = []
+
+# Use search cursor to get a list of the exitsting CADEvent numbers and retrieve attribute table using the exact
+# syntax as in ArcMap table - use field name not the field alias
+
+with arcpy.da.SearchCursor(fc, ["CADEvent_"])as cur:
+    for row in cur:
+        cad_list.append(row[0])
+        
+        
+### Check to see if a CADEvent exists in the list -
+##cadtest = "17017690"
+##cadtest in cad_list
+
+### will return true or false
+# Initialize a counter to track how many rows are being added
+count = 0
+
+# Create an insert cursor for records that are not already in the table in ArcMap
+with arcpy.da.InsertCursor(fc, ["SHAPE@XY", "CADEvent_", "Beat", "Type", "Code", "Location", "GroupCount", "ContactName", "ContactDOB_", "ContactDescription", "DateofContact", "TimeofContact", "Notes", "Camp"]) as cur:
+    with open(csv_file, "rb") as f_in:
+        #Skip the first line for the header in CSV file
+        f_in.readline()
+        reader = csv.reader(f_in)
+        # Loop through the lines in the CSV file to find records that are not already in the attribute table
+        ctrb1=float(0)
+        ctrb2=float(0)
+        ctrb3=float(0)
+        ctrb4=float(0)
+        total=float(0)
+        for row in reader:
+##            # Split the line in the text file on the comma
+##            line_split = line.split(",")
+            # Get the CAD events to check against the attribute table
+            cadevent = row[2]
+            # Check the CAD events from the CSV file against the attribute table
+            if cadevent not in cad_list:
+                x = float(row[1])
+                y = float(row[0])
+                beat = row[3]
+                type = row[4]
+                code = row[5]
+                location = row[6]
+                groupcount = row[7]
+                contactname = row[8]
+                contactdob = row[9]
+                contactdesc = row[10]
+                datecont = row[11]
+                timecont = row[12]
+                notes = row[13]
+                camp = row[14]
+        
+                #.replace("\n", "")
+                # Create the row to add
+                row = ((x,y), cadevent, beat, type, code, location, groupcount, contactname, contactdob, contactdesc, datecont, timecont, notes, camp)
+              
+                # Insert the row
+                print >>f, "Adding " + cadevent
+                cur.insertRow(row)
+                count += 1
+                if (cadevent.beat == "46-1"):
+                    ctrb1+=1
+                elif (cadevent.beat == "46-2"): 
+                    ctrb2+=1
+                elif (cadevent.beat == "46-3"):
+                    ctrb3+=1
+                else:
+                    ctrb4+=1
+                total+=1
+            else:
+                print >>f, "This record has already been added"
+                beat = row[3]
+                if (beat == "46-1"):
+                    ctrb1+=1
+                elif (beat == "46-2"): 
+                    ctrb2+=1
+                elif (beat == "46-3"):
+                    ctrb3+=1
+                else:
+                    ctrb4+=1
+                total+=1
+        print("Percentage of contacts in beat 1: {}".format(ctrb1/total))
+        print("Percentage of contacts in beat 2: {}".format(ctrb2/total))
+        print("Percentage of contacts in beat 3: {}".format(ctrb3/total))
+        print("Percentage of contacts in beat 4: {}".format(ctrb4/total))
+ 
+print >>f, str(count) + " features were added"
+    
+
+
+f.close()
